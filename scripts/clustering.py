@@ -1,14 +1,19 @@
 import argparse
-import collections
 import os
+from collections import Counter
+from itertools import product
 from statistics import median, mean
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from nltk import word_tokenize
 from scipy import stats
+from sklearn import metrics
 from sklearn.cluster import KMeans
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.utils import shuffle
 
 
 class Clusterizer:
@@ -16,24 +21,29 @@ class Clusterizer:
         self.verbose = verbose
         self.maxlen = maxlen
         self.model = None
+        self.method = None
+        self.X = None
 
     def train(self, texts, descriptions, n_clusters, method):
         raw_X = [f'{descr} {text}' for text, descr in zip(texts, descriptions)]
-        if method == 'tf-idf':
-            X = self.transform_tfidf(raw_X)
-        elif method == 'tokens':
-            X = self.transform_tokens(raw_X)
+        self.method = method
+        if self.method == 'tf-idf':
+            self.X = self.transform_tfidf(raw_X)
+        elif self.method == 'tokens':
+            self.X = self.transform_tokens(raw_X)
 
-        elif method == 'token frequency':
-            X = self.transform_frequencies(raw_X)
+        elif self.method == 'token frequency':
+            self.X = self.transform_frequencies(raw_X)
         else:
             raise KeyError(
-                f'method {method} for preprocessing is not found. Try one of these: tf-idf, tokens, tokens frequency')
+                f'method {method} for preprocessing is not found. Try one of these: tf-idf, tokens, token frequency')
+        if self.verbose:
+            print(f'Training a model with {n_clusters} clusters using {self.method} of vectorization')
+        self.model = KMeans(n_clusters=n_clusters)
+        self.model.fit(self.X)
 
-        model = KMeans(n_clusters=n_clusters)
-        model.fit(X)
-
-    def transform_tfidf(self, texts):
+    @staticmethod
+    def transform_tfidf(texts):
         tfidf = TfidfVectorizer(tokenizer=word_tokenize)
         X = tfidf.fit_transform(texts)
         return X
@@ -44,9 +54,6 @@ class Clusterizer:
         vocabulary = list(set(words))
         if self.verbose:
             print(f'Corpus vocabulary contains {len(vocabulary)} words')
-        tok2int = collections.defaultdict(lambda: len(tok2int))
-        tok2int['<unk>'] = 0
-        tok2int['<pad>'] = 1
         lens = [len(text) for text in texts]
         maximlen = max(lens)
         meanlen = mean(lens)
@@ -54,14 +61,22 @@ class Clusterizer:
         medianlen = median(lens)
         if self.verbose:
             print(
-                f'Maximal length of a text is {maximlen},\n Average length is {meanlen},\n Mode of a corpus is {modelen},\n Median is {medianlen}')
-            print(f'Sequences will be padded/truncated to the length {self.maxlen}')
-        padded_texts = [self._resize_sentence(text, self.maxlen) for text in texts]
-        converted_texts = [[tok2int.get(word, 0) for word in text] for text in padded_texts]
+                f'Maximal length of a text is {maximlen},\nAverage length is {meanlen},\nMode of a corpus is {modelen},\nMedian is {medianlen}')
+        converted_texts = np.zeros((len(texts), len(vocabulary)))
+        for i, text in enumerate(tokenized):
+            converted_texts[i] = [1 if word in text else 0 for word in vocabulary]
         return converted_texts
 
-    def transform_frequencies(self, texts):
-        return texts
+    @staticmethod
+    def transform_frequencies(texts):
+        tokenized = [text.split() for text in texts]
+        words = sum(tokenized, [])
+        vocabulary = dict(Counter(words))
+        converted_texts = np.zeros((len(texts), len(vocabulary)))
+        for i, text in enumerate(texts):
+            converted_texts[i] = [vocabulary[word] if word in text else 0 for word in vocabulary]
+
+        return converted_texts
 
     @staticmethod
     def _resize_sentence(text, maxlen):
@@ -74,35 +89,60 @@ class Clusterizer:
             text.extend(context)
         return text
 
-    def evaluate(self):
+    def evaluate(self, true):
         if not self.model:
             raise NotFittedError('Method train should be called first')
-        pass
+        predicted = self.model.labels_
+        homogeneity = metrics.homogeneity_score(true, predicted)
+        completeness = metrics.completeness_score(true, predicted)
+        v_measure = metrics.v_measure_score(true, predicted)
+        randscore = metrics.adjusted_rand_score(true, predicted)
+        silhouette = metrics.silhouette_score(self.X, predicted)
 
-    def visualise(self):
-        if not self.model:
-            raise NotFittedError('Method train should be called first')
-        pass
+        return {'Homogeneity': homogeneity, 'Completeness': completeness, 'V measure': v_measure,
+                'Adjusted Rand Index': randscore, 'Silhouette coefficient': silhouette}
+
+    @staticmethod
+    def visualise(results: dict):
+        for metric in list(results.values())[0]:
+            x = []
+            y = []
+            for result in results:
+                x.append(result)
+                y.append(results[result][metric])
+            plt.plot(x, y, label=metric)
+        plt.gcf().set_size_inches(10, 5)
+        plt.xlabel('number of clusters and method')
+        plt.ylabel('quality')
+        plt.title('Metrics')
+        plt.legend()
+        plt.show()
+        plt.savefig('visualization.png')
 
 
-def main(inputpath, outputpath, verbose):
+def main(inputpath, verbose):
     if os.path.isfile(inputpath):
         df = pd.read_csv(inputpath)
+        df = shuffle(df).reset_index(drop=True)
     else:
         raise FileNotFoundError(f'File {inputpath} is not found. Retry with another name')
 
-    clusterizer = Clusterizer(verbose)
-    model = clusterizer.train(df['token_text'], df['token_description'], 2, 'tf-idf')
-    results = model.evaluate()
-    model.visualise()
+    all_results = dict()
+    for option in product(['tf-idf', 'tokens', 'token frequency'], [2, 6]):
+        clusterizer = Clusterizer(verbose)
+        clusterizer.train(df['token_text'], df['token_description'], option[1], option[0])
+        if option[1] == 2:
+            results = clusterizer.evaluate(df['datatype'])
+        else:
+            results = clusterizer.evaluate(df['category'])
+        all_results[f'{option[1]} clust., {option[0][:10]}'] = results
+    Clusterizer.visualise(all_results)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Corpus Preprocessor")
-    parser.add_argument("--input", type=str, default='data.csv',
-                        help="path to the input file for preprocessing (a csv file obtained after running the corpus_extraction.py script)")
-    parser.add_argument("--output", type=str, default='preprocessed_data.csv',
-                        help="desired path to the output csv file")
+    parser.add_argument("--input", type=str, default='preprocessed_data.csv',
+                        help="path to the preprocessed csv file")
     parser.add_argument('--verbose', help='print out the logs (default: False)', action='store_true')
     args = parser.parse_args()
-    main(args.input, args.output, args.verbose)
+    main(args.input, args.verbose)
