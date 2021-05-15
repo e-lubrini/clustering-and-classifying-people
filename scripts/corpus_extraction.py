@@ -13,6 +13,9 @@ from itertools import islice
 import threading
 
 class DataExtractor(threading.Thread):
+    """
+    Supplementary class for parallel wikipedia parsing
+    """
     def __init__(self, id_, n_sentences):
         super().__init__()
         self.id = id_
@@ -43,6 +46,11 @@ class DataExtractor(threading.Thread):
         self.article = article
 
 class Extractor:
+    """
+    Automatic articles extraction from wikipedia
+
+     :param verbose: if True, the main steps will be printed during the execution
+    """
     def __init__(self, verbose=False):
         self.keywords = ['architect', 'mathematician', 'painter', 'politician', 'singer', 'writer']
         agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
@@ -53,8 +61,15 @@ class Extractor:
         self.Z = ['architect', 'politician', 'mathematician']
 
     def extract(self, n_sentences: int, n_people: int):
+        """
+
+        :param n_sentences: number of sentences in the wikipedia article text per person
+        :param n_people: number of persons to look for in one category
+        :return: pandas dataframe with 5 columns: title, description, text, category, datatype
+        """
         if self.verbose:
             print('▶ extracting the ids')
+        # check if wikipedia ids were already parsed, if so, restore them from a file
         if os.path.isfile('data/keywords_ids.json'):
             with open('data/keywords_ids.json') as kfile:
                 ids = json.loads(kfile.read())
@@ -67,6 +82,7 @@ class Extractor:
             with open('data/keywords_ids.json', 'w') as out:
                 json.dump(ids, out)
 
+        # parsing the wikipedia articles
         data = {}
         if self.verbose:
             print('▶ parsing the descriptions')
@@ -84,6 +100,7 @@ class Extractor:
                 articles_left = n_people - counter
                 extractors = []
                 for id_ in i_ppl_ids:
+                    # starting parallel threads for retrieving the texts
                     extractor = DataExtractor(id_, n_sentences)
                     extractor.start()
                     extractors.append(extractor)
@@ -98,10 +115,16 @@ class Extractor:
 
         if self.verbose:
             print('▶ storing the data into csv')
-        self.get_csv(data)
-        return data
+        # storing the data into the csv file
+        df = self.get_csv(data)
+        return df
 
     def get_ids(self, keyword: str):
+        """
+        Supplementary function for ids extraction
+        :param keyword: a word that should be in the article
+        :return: list of all the ids which refer to the wikipedia article with the defined keyword
+        """
         result = requests.get('https://www.wikidata.org/w/api.php',
                               params={'format': 'json',
                                       'action': 'wbsearchentities',
@@ -116,7 +139,6 @@ class Extractor:
         SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE]". }
         }
         '''
-
         self.endpoint.setQuery(query)
         results = self.endpoint.query()
 
@@ -130,6 +152,11 @@ class Extractor:
 
     @staticmethod
     def get_title_and_description(id_: str):
+        """
+        Supplementary function for title and description extraction
+        :param id_: id of an article to extract
+        :return: two strings: title of a page and description of a page
+        """
         page = wptools.page(wikibase=id_, silent=True)
         page.get_wikidata()
         title = page.data['title']
@@ -139,6 +166,12 @@ class Extractor:
 
     @staticmethod
     def get_content(title: str, n_sentences: int):
+        """
+        Supplementary function for article's content extraction
+        :param title: the title of a wikipedia article
+        :param n_sentences: number of sentences to take from the page
+        :return: content of an article
+        """
         page = wikipedia.page(title)
         content = page.content
         sentences = [sent.strip() for sent in islice(nltk.sent_tokenize(content), n_sentences)]
@@ -146,6 +179,11 @@ class Extractor:
         return ' '.join(sentences)
 
     def get_csv(self, data):
+        """
+        Supplementary function for saving the data into the csv file
+        :param data: dictionary with the parsed data (titles, descriptions, texts, categories)
+        :return: a pandas dataframe
+        """
         category = []
         datatype = []
         title = []
@@ -165,10 +203,18 @@ class Extractor:
                            'datatype': datatype, 'text': content})
         df.to_csv('data/data.csv', index=False)
 
+        return df
+
 
 
 
 def main(n_sentences, n_people, verbose):
+    """
+    Function that starts after calling the script
+    :param n_sentences: number of sentences per article
+    :param n_people: number of persons per category
+    :param verbose: if True, the main steps will be printed during the execution
+    """
     extractor = Extractor(verbose)
     extractor.extract(n_sentences, n_people)
 
