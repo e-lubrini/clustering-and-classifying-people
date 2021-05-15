@@ -56,7 +56,7 @@ These are the results obtained on the data stored in the ```data``` directory:
 
 **Clusterization**:
 
-![Clustering visualization](/Users/anna/Documents/GitHub/clustering-and-classifying-people/data/Clustering visualization.png)
+![Clustering visualization](data/Clustering visualization.png)
 
 
 
@@ -72,7 +72,7 @@ These are the results obtained on the data stored in the ```data``` directory:
 
 **2 class classification:**
 
-![Confusion matrix 2 classes](/Users/anna/Documents/GitHub/clustering-and-classifying-people/data/Confusion matrix 2 classes.png)
+![Confusion matrix 2 classes](data/Confusion matrix 2 classes.png)
 
 |                  | **precision** | **recall** | **f1-score** | **support** |
 | ---------------- | ------------- | ---------- | ------------ | ----------- |
@@ -84,7 +84,7 @@ These are the results obtained on the data stored in the ```data``` directory:
 
 **6 class classification:**
 
-![Confusion matrix 6 classes](/Users/anna/Documents/GitHub/clustering-and-classifying-people/data/Confusion matrix 6 classes.png)
+![Confusion matrix 6 classes](data/Confusion matrix 6 classes.png)
 
 |                   | **precision** | **recall** | **f1-score** | **support** |
 | ----------------- | ------------- | ---------- | ------------ | ----------- |
@@ -100,7 +100,7 @@ These are the results obtained on the data stored in the ```data``` directory:
 
 **Comparison**:
 
-![Accuracy visualization](/Users/anna/Documents/GitHub/clustering-and-classifying-people/data/Accuracy visualization.png)
+![Accuracy visualization](data/Accuracy visualization.png)
 
 
 
