@@ -1,8 +1,10 @@
+# import modules
 import argparse
-import nltk
 import os
-import pandas as pd
 import string
+
+import nltk
+import pandas as pd
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
 from nltk.stem.wordnet import WordNetLemmatizer
@@ -12,6 +14,7 @@ class Preprocessor:
     """
     Class for preprocessing the data before using it for training the models
     """
+
     def __init__(self, lowercase=True, rmv_stopwords=True, rmv_punct=True, lemmatize=True, rmv_nums=False,
                  rmv_foreign=True, verbose=False):
         """
@@ -33,7 +36,7 @@ class Preprocessor:
         self.lemmatizer = WordNetLemmatizer()
         self.verbose = verbose
 
-    def transform(self, texts:list):
+    def transform(self, texts: list):
         """
         Fucntion that applies all the chosen transformations to the texts
         :param texts: list of texts that should be preprocessed
@@ -75,7 +78,7 @@ class Preprocessor:
         return texts
 
     @staticmethod
-    def tokenize(text):
+    def tokenize(text: str):
         """
         Supplementary method for tokenization
         :param text: a string with a text
@@ -85,7 +88,7 @@ class Preprocessor:
         return tokenised_s
 
     @staticmethod
-    def lower_case(text):
+    def lower_case(text: str):
         """
         Supplementary method for changing the case
         :param text: a string with a text
@@ -94,7 +97,7 @@ class Preprocessor:
         return text.lower()
 
     @staticmethod
-    def remove_nums(text):
+    def remove_nums(text: str):
         """
         Supplementary method for removing numbers
         :param text: a string with a text
@@ -104,7 +107,7 @@ class Preprocessor:
         return text.translate(nums_translator)
 
     @staticmethod
-    def remove_punct(text):
+    def remove_punct(text: str):
         """
         Supplementary method for removing the punctuation
         :param text: a string with a text
@@ -114,7 +117,7 @@ class Preprocessor:
         return text.translate(punct_translator)
 
     @staticmethod
-    def segment_and_tokenize(text):
+    def segment_and_tokenize(text: str):
         """
         Supplementary method for tokenizing a text into lists of lists of tokens
         :param text: a string with a text
@@ -126,7 +129,7 @@ class Preprocessor:
         tokenised_s = list(map(nltk.word_tokenize, sentences))
         return tokenised_s
 
-    def remove_stopwords(self, text):
+    def remove_stopwords(self, text: list):
         """
         Supplementary method for removing the stopwords
         :param text: list of tokens of the text
@@ -135,7 +138,7 @@ class Preprocessor:
         no_stopwords = list(filter(lambda x: x not in self.stop_words, text))
         return no_stopwords
 
-    def lemmatize_text(self, text):
+    def lemmatize_text(self, text: list):
         """
         Supplementary method for lemmatizing the text
         :param text: list of tokens of the text
@@ -161,12 +164,13 @@ class Preprocessor:
         return lemmas
 
     @staticmethod
-    def remove_foreign(text):
+    def remove_foreign(text: str):
         """
         Supplementary method for removing all the letters except for the English ones
         :param text: a string with a text
         :return: the transformed string
         """
+
         def checker(x):
             return ((x.isalpha() and x in list('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'))
                     or not x.isalpha())
@@ -175,7 +179,7 @@ class Preprocessor:
         return text
 
 
-def main(inputpath, outputpath, verbose):
+def main(inputpath: str, outputpath: str, verbose: bool):
     """
     Function that starts after calling the script
     :param inputpath: path to the csv with the data for preprocessing

@@ -1,10 +1,12 @@
+# import modules
 import argparse
+import os
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
 import seaborn as sns
-import warnings
 from nltk import word_tokenize
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -17,17 +19,34 @@ warnings.filterwarnings("ignore")
 
 
 class Classifier:
-    def __init__(self, verbose):
+    """
+    Class for automatic texts classification using perceptron
+    """
+
+    def __init__(self, verbose: bool):
+        """
+        :param verbose: if True, the main steps will be printed during the execution
+        """
         self.verbose = verbose
         self.model = None
 
-    def train(self, X, y):
+    def train(self, X, y: list):
+        """
+        Function used for training the Perceptron algorithm on the data vectorized using Tf-Idf vectorization
+        :param X: sparse matrix with the texts preprocessed by Tf-Idf Vectorizer
+        :param y: expected values for each example
+        """
         if self.verbose:
             print(f'▶ Training the model with the following classes: {", ".join(np.unique(y))}')
         self.model = Perceptron(penalty='l1', alpha=0.001, random_state=0)
         self.model.fit(X, y)
 
     def predict(self, X):
+        """
+        Function for predicting the values given the sparse matrix of texts preprocessed using Tf-Idf vectorization
+        :param X: sparse matrix with the texts preprocessed by Tf-Idf Vectorizer
+        :return: list of predicted values
+        """
         if not self.model:
             raise NotFittedError('Method train should be called first')
         if self.verbose:
@@ -35,7 +54,15 @@ class Classifier:
         pred = self.model.predict(X)
         return pred
 
-    def compute_scores(self, expected, predicted, num_classes):
+    def compute_scores(self, expected: list, predicted: list, num_classes: int):
+        """
+        Function for computing the confusion matrix, Recall, Precision and F1 scores
+        (will be stored in two files in the 'data' folder)
+        :param expected: list with the expected values for the examples
+        :param predicted: list with the predicted values for the examples
+        :param num_classes: number of classes that the classifier could predict
+        :return: numpy array with the confusion matrix, string with the recall, precision and f1 scores
+        """
         if self.verbose:
             print('▶ Saving the scores')
         # get classes
@@ -58,6 +85,11 @@ class Classifier:
 
     @staticmethod
     def accuracy_per_class(conf_matrix):
+        """
+        Supplementary function for computing the per class accuracy (Defined by the formula: ((TP+TN)/TP+TN+FP+FN))
+        :param conf_matrix: numpy array with the confusion matrix
+        :return: list of accuracies for each class in the matrix
+        """
         output = []
         for idx in range(conf_matrix.shape[0]):
             true_negative = np.sum(np.delete(np.delete(conf_matrix, idx, axis=0), idx, axis=1))
@@ -67,7 +99,15 @@ class Classifier:
 
         return output
 
-    def visualise(self, conf_matrix2, conf_matrix6, cats2, cats6):
+    def visualise(self, conf_matrix2, conf_matrix6, cats2: list, cats6: list):
+        """
+        Function for visualizing the classification results (comparison of per class accuracies for the models)
+        :param conf_matrix2: numpy array with the confusion matrix for 2 class classifier
+        :param conf_matrix6: numpy array with the confusion matrix for 6 class classifier
+        :param cats2: list of categories used in the 2 class classifier
+        :param cats6: list of categories used in the 6 class classifier
+        :return:
+        """
         if self.verbose:
             print('▶ Saving the visualization')
         acc2 = self.accuracy_per_class(conf_matrix2)
@@ -83,7 +123,14 @@ class Classifier:
         fig.savefig('data/Accuracy visualization.png')
         fig.clf()
 
-    def split_convert_data(self, texts, labels):
+    def split_convert_data(self, texts: list, labels: list):
+        """
+        Supplementary function for splitting the data and processing it using Tf-Idf Vectorizer
+        :param texts: list of texts to preprocess
+        :param labels: list of expected values to assign to each example
+        :return: sparse matrix with the train data, sparse matrix with the test data,
+                list of expected values for the training data,  list of expected values for the test data
+        """
         X_train, X_test, y_train, y_test = train_test_split(texts, labels, test_size=0.3, random_state=42,
                                                             stratify=labels)
         tfidf = TfidfVectorizer(tokenizer=word_tokenize)
@@ -95,7 +142,12 @@ class Classifier:
         return X_train, X_test, y_train, y_test
 
 
-def main(inputpath, verbose):
+def main(inputpath: str, verbose: bool):
+    """
+    Function that starts after calling the script
+    :param inputpath: path to the preprocessed csv file
+    :param verbose: if True, the main steps will be printed during the execution
+    """
     if os.path.isfile(inputpath):
         df = pd.read_csv(inputpath)
         df = shuffle(df).reset_index(drop=True)

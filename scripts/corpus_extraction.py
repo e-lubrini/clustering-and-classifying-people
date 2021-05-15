@@ -1,22 +1,25 @@
 # import modules
 import argparse
 import json
-import nltk
 import os
-import pandas as pd
 import random
+import threading
+from itertools import islice
+
+import nltk
+import pandas as pd
 import requests
 import wikipedia
 import wptools
 from SPARQLWrapper import SPARQLWrapper, JSON
-from itertools import islice
-import threading
+
 
 class DataExtractor(threading.Thread):
     """
     Supplementary class for parallel wikipedia parsing
     """
-    def __init__(self, id_, n_sentences):
+
+    def __init__(self, id_: str, n_sentences: int):
         super().__init__()
         self.id = id_
         self.article = None
@@ -45,10 +48,12 @@ class DataExtractor(threading.Thread):
 
         self.article = article
 
+
 class Extractor:
     """
     Automatic articles extraction from wikipedia
     """
+
     def __init__(self, verbose=False):
         """
         :param verbose: if True, the main steps will be printed during the execution
@@ -179,7 +184,7 @@ class Extractor:
 
         return ' '.join(sentences)
 
-    def get_csv(self, data):
+    def get_csv(self, data: dict):
         """
         Supplementary function for saving the data into the csv file
         :param data: dictionary with the parsed data (titles, descriptions, texts, categories)
@@ -207,9 +212,7 @@ class Extractor:
         return df
 
 
-
-
-def main(n_sentences, n_people, verbose):
+def main(n_sentences: int, n_people: int, verbose: bool):
     """
     Function that starts after calling the script
     :param n_sentences: number of sentences per article
@@ -228,4 +231,3 @@ if __name__ == "__main__":
     parser.add_argument('--verbose', help='print out the logs (default: False)', action='store_true')
     args = parser.parse_args()
     main(args.n_sentences, args.n_people, args.verbose)
-
