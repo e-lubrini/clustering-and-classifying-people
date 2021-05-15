@@ -1,11 +1,10 @@
 import argparse
-import os
-import warnings
-
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import seaborn as sns
+import warnings
 from nltk import word_tokenize
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -24,21 +23,21 @@ class Classifier:
 
     def train(self, X, y):
         if self.verbose:
-            print(f'Training the model with the following classes: {", ".join(np.unique(y))}')
-        self.model = Perceptron(penalty='l1', alpha=0.001)
+            print(f'▶ Training the model with the following classes: {", ".join(np.unique(y))}')
+        self.model = Perceptron(penalty='l1', alpha=0.001, random_state=0)
         self.model.fit(X, y)
 
     def predict(self, X):
         if not self.model:
             raise NotFittedError('Method train should be called first')
         if self.verbose:
-            print(f'Predicting...')
+            print(f'▶ Predicting...')
         pred = self.model.predict(X)
         return pred
 
     def compute_scores(self, expected, predicted, num_classes):
         if self.verbose:
-            print('Saving the scores')
+            print('▶ Saving the scores')
         # get classes
         classes = self.model.classes_
 
@@ -46,14 +45,14 @@ class Classifier:
         conf_matrix = confusion_matrix(expected, predicted)
         plt.figure(figsize=(10, 10))
         plot = sns.heatmap(conf_matrix, annot=True, cmap='Blues', xticklabels=classes, yticklabels=classes)
-        plt.savefig(f'Confusion matrix {num_classes} classes.png')
+        plt.savefig(f'data/Confusion matrix {num_classes} classes.png')
         plt.clf()
 
         # get precision, recall, F1
         report = classification_report(predicted, expected)
         report_dict = classification_report(predicted, expected, output_dict=True)
         df = pd.DataFrame(report_dict).transpose().round(2)
-        df.to_csv(f'Scores {num_classes} classes.csv', index=False)
+        df.to_csv(f'data/Scores {num_classes} classes.csv')
 
         return conf_matrix, report, classes
 
@@ -70,7 +69,7 @@ class Classifier:
 
     def visualise(self, conf_matrix2, conf_matrix6, cats2, cats6):
         if self.verbose:
-            print('Saving the visualization')
+            print('▶ Saving the visualization')
         acc2 = self.accuracy_per_class(conf_matrix2)
         acc6 = self.accuracy_per_class(conf_matrix6)
 
@@ -81,7 +80,7 @@ class Classifier:
         axes[0].set_title('Accuracy per subcategory')
         sns.barplot(ax=axes[1], x=cats6, y=acc6, color=c)
         axes[1].set_title('Accuracy per category')
-        fig.savefig('Accuracy visualization.png')
+        fig.savefig('data/Accuracy visualization.png')
         fig.clf()
 
     def split_convert_data(self, texts, labels):
@@ -90,7 +89,7 @@ class Classifier:
         tfidf = TfidfVectorizer(tokenizer=word_tokenize)
         tfidf.fit(X_train)
         if self.verbose:
-            print(f'Number of Tf-Idf features: {len(tfidf.get_feature_names())}')
+            print(f'▶ Number of Tf-Idf features: {len(tfidf.get_feature_names())}')
         X_train = tfidf.transform(X_train)
         X_test = tfidf.transform(X_test)
         return X_train, X_test, y_train, y_test
@@ -119,7 +118,7 @@ def main(inputpath, verbose):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Corpus Classifier")
-    parser.add_argument("--input", type=str, default='preprocessed_data.csv',
+    parser.add_argument("--input", type=str, default='data/preprocessed_data.csv',
                         help="path to the preprocessed csv file")
     parser.add_argument('--verbose', help='print out the logs (default: False)', action='store_true')
     args = parser.parse_args()

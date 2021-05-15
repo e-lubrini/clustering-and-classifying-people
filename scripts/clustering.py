@@ -1,12 +1,10 @@
 import argparse
-import os
-from collections import Counter
-from itertools import product
-from statistics import median, mean
-
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
+from collections import Counter
+from itertools import product
 from nltk import word_tokenize
 from scipy import stats
 from sklearn import metrics
@@ -14,6 +12,7 @@ from sklearn.cluster import KMeans
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.utils import shuffle
+from statistics import median, mean
 
 
 class Clusterizer:
@@ -37,7 +36,7 @@ class Clusterizer:
             raise KeyError(
                 f'Method {method} for preprocessing is not found. Try one of these: tf-idf, tokens, token frequency')
         if self.verbose:
-            print(f'Training a model with {n_clusters} clusters using {self.method} of vectorization')
+            print(f'▶ Training a model with {n_clusters} clusters using {self.method}')
         self.model = KMeans(n_clusters=n_clusters)
         self.model.fit(self.X)
 
@@ -52,15 +51,7 @@ class Clusterizer:
         words = sum(tokenized, [])
         vocabulary = list(set(words))
         if self.verbose:
-            print(f'Corpus vocabulary contains {len(vocabulary)} words')
-        lens = [len(text) for text in texts]
-        maximlen = max(lens)
-        meanlen = mean(lens)
-        modelen = stats.mode(lens)
-        medianlen = median(lens)
-        if self.verbose:
-            print(
-                f'Maximal length of a text is {maximlen},\nAverage length is {meanlen},\nMode of a corpus is {modelen},\nMedian is {medianlen}')
+            print(f'▶ Corpus vocabulary contains {len(vocabulary)} words')
         converted_texts = np.zeros((len(texts), len(vocabulary)))
         for i, text in enumerate(tokenized):
             converted_texts[i] = [1 if word in text else 0 for word in vocabulary]
@@ -93,7 +84,7 @@ class Clusterizer:
     @staticmethod
     def visualise(results: dict):
         res_df = pd.DataFrame(results)
-        res_df.to_csv('results.csv', index=False)
+        res_df.to_csv('data/Clustering results.csv', index=False)
         for metric in list(results.values())[0]:
             x = []
             y = []
@@ -106,7 +97,7 @@ class Clusterizer:
         plt.ylabel('quality')
         plt.title('Metrics')
         plt.legend()
-        plt.savefig('Clustering visualization.png')
+        plt.savefig('data/Clustering visualization.png')
 
 
 def main(inputpath, verbose):
@@ -130,7 +121,7 @@ def main(inputpath, verbose):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Corpus Clusterizer")
-    parser.add_argument("--input", type=str, default='preprocessed_data.csv',
+    parser.add_argument("--input", type=str, default='data/preprocessed_data.csv',
                         help="path to the preprocessed csv file")
     parser.add_argument('--verbose', help='print out the logs (default: False)', action='store_true')
     args = parser.parse_args()

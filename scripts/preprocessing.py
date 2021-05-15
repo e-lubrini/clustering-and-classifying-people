@@ -1,9 +1,8 @@
 import argparse
-import os
-import string
-
 import nltk
+import os
 import pandas as pd
+import string
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
 from nltk.stem.wordnet import WordNetLemmatizer
@@ -11,12 +10,13 @@ from nltk.stem.wordnet import WordNetLemmatizer
 
 class Preprocessor:
     def __init__(self, lowercase=True, rmv_stopwords=True, rmv_punct=True, lemmatize=True, rmv_nums=False,
-                 verbose=False):
+                 rmv_foreign=True, verbose=False):
         self.lowercase = lowercase
         self.rmv_stopwords = rmv_stopwords
         self.rmv_punct = rmv_punct
         self.lemmatize = lemmatize
         self.rmv_nums = rmv_nums
+        self.rmv_foreign = rmv_foreign
         self.stop_words = set(stopwords.words('english'))
         self.lemmatizer = WordNetLemmatizer()
         self.verbose = verbose
@@ -35,6 +35,11 @@ class Preprocessor:
             if self.verbose:
                 print('▶ Punctuation removal...')
             texts = list(map(self.remove_punct, texts))
+
+        if self.rmv_foreign:
+            if self.verbose:
+                print('▶ Foreign characters removal...')
+            texts = list(map(self.remove_foreign, texts))
 
         if self.verbose:
             print('▶ Tokenization...')
@@ -103,6 +108,15 @@ class Preprocessor:
                 lemmas.append(word)
         return lemmas
 
+    @staticmethod
+    def remove_foreign(text):
+        def checker(x):
+            return ((x.isalpha() and x in list('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+                    or not x.isalpha())
+
+        text = "".join(filter(checker, text))
+        return text
+
 
 def main(inputpath, outputpath, verbose):
     if os.path.isfile(inputpath):
@@ -111,10 +125,10 @@ def main(inputpath, outputpath, verbose):
         raise FileNotFoundError(f'File {inputpath} is not found. Retry with another name')
     preprocessor = Preprocessor(verbose=args.verbose)
     if verbose:
-        print('Descriptions processing...')
+        print('▶ Descriptions processing...')
     df['token_description'] = preprocessor.transform(df['description'])
     if verbose:
-        print('Texts processing...')
+        print('▶ Texts processing...')
     df['token_text'] = preprocessor.transform(df['text'])
     df = df[['title', 'text', 'token_text', 'description', 'token_description', 'category', 'datatype']]
     df.to_csv(outputpath, index=False)
@@ -123,9 +137,10 @@ def main(inputpath, outputpath, verbose):
 # main entry point
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Corpus Preprocessor")
-    parser.add_argument("--input", type=str, default='data.csv',
-                        help="path to the input file for preprocessing (a csv file obtained after running the corpus_extraction.py script)")
-    parser.add_argument("--output", type=str, default='preprocessed_data.csv',
+    parser.add_argument("--input", type=str, default='data/data.csv',
+                        help="path to the input file for preprocessing (a csv file obtained after running the \
+                        corpus_extraction.py script)")
+    parser.add_argument("--output", type=str, default='data/preprocessed_data.csv',
                         help="desired path to the output csv file")
     parser.add_argument('--verbose', help='print out the logs (default: False)', action='store_true')
     args = parser.parse_args()

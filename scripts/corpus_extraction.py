@@ -1,21 +1,49 @@
 # import modules
 import argparse
 import json
-import os
-import random
-from itertools import islice
-
 import nltk
+import os
 import pandas as pd
+import random
 import requests
 import wikipedia
 import wptools
 from SPARQLWrapper import SPARQLWrapper, JSON
+from itertools import islice
+import threading
 
+class DataExtractor(threading.Thread):
+    def __init__(self, id_, n_sentences):
+        super().__init__()
+        self.id = id_
+        self.article = None
+        self.n_sentences = n_sentences
+
+    def run(self):
+        article = {}
+        try:
+            t, d = Extractor.get_title_and_description(self.id)
+            if not isinstance(d, str):
+                return
+        except LookupError:
+            return
+        try:
+            c = Extractor.get_content(wikipedia.page(t), n_sentences=self.n_sentences)
+            c = nltk.sent_tokenize(c)[:10]
+            if len(c) < self.n_sentences:
+                return
+            c = " ".join(c)
+        except (wikipedia.PageError, wikipedia.DisambiguationError):
+            return
+
+        article['title'] = t
+        article['description'] = d
+        article['content'] = c
+
+        self.article = article
 
 class Extractor:
     def __init__(self, verbose=False):
-        self.sentence_tokenize = nltk.sent_tokenize
         self.keywords = ['architect', 'mathematician', 'painter', 'politician', 'singer', 'writer']
         agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
         self.endpoint = SPARQLWrapper('https://query.wikidata.org/sparql', agent=agent)
@@ -27,8 +55,8 @@ class Extractor:
     def extract(self, n_sentences: int, n_people: int):
         if self.verbose:
             print('▶ extracting the ids')
-        if os.path.isfile('keywords_ids.json'):
-            with open('keywords_ids.json') as kfile:
+        if os.path.isfile('data/keywords_ids.json'):
+            with open('data/keywords_ids.json') as kfile:
                 ids = json.loads(kfile.read())
         else:
             ids = {}
@@ -36,7 +64,7 @@ class Extractor:
                 if self.verbose:
                     print('▶ keyword:', keyword)
                 ids[keyword] = self.get_ids(keyword)
-            with open('keywords_ids.json', 'w') as out:
+            with open('data/keywords_ids.json', 'w') as out:
                 json.dump(ids, out)
 
         data = {}
@@ -50,42 +78,23 @@ class Extractor:
             if self.verbose:
                 print(f'▶ number of {keyw}s is {len(ppl_ids)}')
             counter = 0
-            for id_ in ppl_ids:
-                if counter == n_people:
-                    break
-                if self.verbose:
-                    print('▶ counter', counter)
-                if self.verbose:
-                    print('▶ id_', id_)
-                article = {}
-                try:
-                    t, d = self.get_title_and_description(id_)
-                    if not isinstance(d, str):
-                        if self.verbose:
-                            print('▶ FAILED - Description is empty')
-                        continue
-                except LookupError:
-                    if self.verbose:
-                        print('▶ FAILED - LookupError')
-                    continue
+            i_ppl_ids = iter(ppl_ids)
 
-                try:
-                    c = self.get_content(wikipedia.page(t), n_sentences=n_sentences)
-                    c = self.sentence_tokenize(c)[:10]
-                    if len(c) < n_sentences:
-                        if self.verbose:
-                            print('▶ FAILED - number of sentences is not sufficient')
-                        continue
-                    c = " ".join(c)
-                except (wikipedia.PageError, wikipedia.DisambiguationError):
-                    if self.verbose:
-                        print('▶ FAILED - PageError / DisambiguationError')
-                    continue
-                counter += 1
-                article['title'] = t
-                article['description'] = d
-                article['content'] = c
-                data[keyw].append(article)
+            while counter < n_people:
+                articles_left = n_people - counter
+                extractors = []
+                for id_ in i_ppl_ids:
+                    extractor = DataExtractor(id_, n_sentences)
+                    extractor.start()
+                    extractors.append(extractor)
+                    if len(extractors) == articles_left:
+                        break
+
+                for extractor in extractors:
+                    extractor.join()
+                    if extractor.article is not None:
+                        counter += 1
+                        data[keyw].append(extractor.article)
 
         if self.verbose:
             print('▶ storing the data into csv')
@@ -128,10 +137,11 @@ class Extractor:
 
         return title, description
 
-    def get_content(self, title: str, n_sentences: int):
+    @staticmethod
+    def get_content(title: str, n_sentences: int):
         page = wikipedia.page(title)
         content = page.content
-        sentences = [sent.strip() for sent in islice(self.sentence_tokenize(content), n_sentences)]
+        sentences = [sent.strip() for sent in islice(nltk.sent_tokenize(content), n_sentences)]
 
         return ' '.join(sentences)
 
@@ -153,7 +163,9 @@ class Extractor:
                 content.append(person['content'])
         df = pd.DataFrame({'title': title, 'description': description, 'category': category,
                            'datatype': datatype, 'text': content})
-        df.to_csv('data.csv', index=False)
+        df.to_csv('data/data.csv', index=False)
+
+
 
 
 def main(n_sentences, n_people, verbose):
@@ -169,3 +181,4 @@ if __name__ == "__main__":
     parser.add_argument('--verbose', help='print out the logs (default: False)', action='store_true')
     args = parser.parse_args()
     main(args.n_sentences, args.n_people, args.verbose)
+
