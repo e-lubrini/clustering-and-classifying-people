@@ -9,8 +9,20 @@ from nltk.stem.wordnet import WordNetLemmatizer
 
 
 class Preprocessor:
+    """
+    Class for preprocessing the data before using it for training the models
+    """
     def __init__(self, lowercase=True, rmv_stopwords=True, rmv_punct=True, lemmatize=True, rmv_nums=False,
                  rmv_foreign=True, verbose=False):
+        """
+        :param lowercase: if True, all texts will be lower cased
+        :param rmv_stopwords: if True, all stop words will be deleted
+        :param rmv_punct: if True, all punctuation will be deleted
+        :param lemmatize: if True, all words will be lemmatized (using nltk lemmatizer)
+        :param rmv_nums: if True, all numbers will be deleted
+        :param rmv_foreign: if True, all non-english letters will be deleted
+        :param verbose: if True, the main steps will be printed during the execution
+        """
         self.lowercase = lowercase
         self.rmv_stopwords = rmv_stopwords
         self.rmv_punct = rmv_punct
@@ -21,7 +33,12 @@ class Preprocessor:
         self.lemmatizer = WordNetLemmatizer()
         self.verbose = verbose
 
-    def transform(self, texts):
+    def transform(self, texts:list):
+        """
+        Fucntion that applies all the chosen transformations to the texts
+        :param texts: list of texts that should be preprocessed
+        :return: the list with all the texts
+        """
         if self.lowercase:
             if self.verbose:
                 print('▶ Lower casing...')
@@ -59,25 +76,50 @@ class Preprocessor:
 
     @staticmethod
     def tokenize(text):
+        """
+        Supplementary method for tokenization
+        :param text: a string with a text
+        :return: list of all tokens in the text
+        """
         tokenised_s = nltk.word_tokenize(text)
         return tokenised_s
 
     @staticmethod
     def lower_case(text):
+        """
+        Supplementary method for changing the case
+        :param text: a string with a text
+        :return: the transformed string
+        """
         return text.lower()
 
     @staticmethod
     def remove_nums(text):
+        """
+        Supplementary method for removing numbers
+        :param text: a string with a text
+        :return: the transformed string
+        """
         nums_translator = str.maketrans('', '', '0123456789')
         return text.translate(nums_translator)
 
     @staticmethod
     def remove_punct(text):
+        """
+        Supplementary method for removing the punctuation
+        :param text: a string with a text
+        :return: the transformed string
+        """
         punct_translator = str.maketrans('', '', string.punctuation)
         return text.translate(punct_translator)
 
     @staticmethod
     def segment_and_tokenize(text):
+        """
+        Supplementary method for tokenizing a text into lists of lists of tokens
+        :param text: a string with a text
+        :return: the list of lists of tokens
+        """
         # Sentence splitting
         sentences = nltk.sent_tokenize(text)
         # tokenizing
@@ -85,10 +127,20 @@ class Preprocessor:
         return tokenised_s
 
     def remove_stopwords(self, text):
+        """
+        Supplementary method for removing the stopwords
+        :param text: list of tokens of the text
+        :return: the transformed list
+        """
         no_stopwords = list(filter(lambda x: x not in self.stop_words, text))
         return no_stopwords
 
     def lemmatize_text(self, text):
+        """
+        Supplementary method for lemmatizing the text
+        :param text: list of tokens of the text
+        :return: list of lemmatized tokens
+        """
         text_pos = nltk.tag.pos_tag(text)
         lemmas = []
         for word, pos in text_pos:
@@ -110,6 +162,11 @@ class Preprocessor:
 
     @staticmethod
     def remove_foreign(text):
+        """
+        Supplementary method for removing all the letters except for the English ones
+        :param text: a string with a text
+        :return: the transformed string
+        """
         def checker(x):
             return ((x.isalpha() and x in list('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'))
                     or not x.isalpha())
@@ -119,6 +176,12 @@ class Preprocessor:
 
 
 def main(inputpath, outputpath, verbose):
+    """
+    Function that starts after calling the script
+    :param inputpath: path to the csv with the data for preprocessing
+    :param outputpath: desired path to the output csv file
+    :param verbose:  if True, the main steps will be printed during the execution
+    """
     if os.path.isfile(inputpath):
         df = pd.read_csv(inputpath)
     else:

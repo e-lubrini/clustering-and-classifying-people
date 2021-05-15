@@ -48,10 +48,11 @@ class DataExtractor(threading.Thread):
 class Extractor:
     """
     Automatic articles extraction from wikipedia
-
-     :param verbose: if True, the main steps will be printed during the execution
     """
     def __init__(self, verbose=False):
+        """
+        :param verbose: if True, the main steps will be printed during the execution
+        """
         self.keywords = ['architect', 'mathematician', 'painter', 'politician', 'singer', 'writer']
         agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'
         self.endpoint = SPARQLWrapper('https://query.wikidata.org/sparql', agent=agent)
