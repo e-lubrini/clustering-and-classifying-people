@@ -17,9 +17,8 @@ from sklearn.utils import shuffle
 
 
 class Clusterizer:
-    def __init__(self, verbose, maxlen=200):
+    def __init__(self, verbose):
         self.verbose = verbose
-        self.maxlen = maxlen
         self.model = None
         self.method = None
         self.X = None
@@ -36,7 +35,7 @@ class Clusterizer:
             self.X = self.transform_frequencies(raw_X)
         else:
             raise KeyError(
-                f'method {method} for preprocessing is not found. Try one of these: tf-idf, tokens, token frequency')
+                f'Method {method} for preprocessing is not found. Try one of these: tf-idf, tokens, token frequency')
         if self.verbose:
             print(f'Training a model with {n_clusters} clusters using {self.method} of vectorization')
         self.model = KMeans(n_clusters=n_clusters)
@@ -78,17 +77,6 @@ class Clusterizer:
 
         return converted_texts
 
-    @staticmethod
-    def _resize_sentence(text, maxlen):
-        length = len(text)
-        if length > maxlen:
-            text = text[:maxlen]
-        elif length < maxlen:
-            to_pad = maxlen - length
-            context = ['<pad>' for _ in range(to_pad)]
-            text.extend(context)
-        return text
-
     def evaluate(self, true):
         if not self.model:
             raise NotFittedError('Method train should be called first')
@@ -104,6 +92,8 @@ class Clusterizer:
 
     @staticmethod
     def visualise(results: dict):
+        res_df = pd.DataFrame(results)
+        res_df.to_csv('results.csv', index=False)
         for metric in list(results.values())[0]:
             x = []
             y = []
@@ -116,8 +106,7 @@ class Clusterizer:
         plt.ylabel('quality')
         plt.title('Metrics')
         plt.legend()
-        plt.show()
-        plt.savefig('visualization.png')
+        plt.savefig('Clustering visualization.png')
 
 
 def main(inputpath, verbose):
@@ -140,7 +129,7 @@ def main(inputpath, verbose):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Corpus Preprocessor")
+    parser = argparse.ArgumentParser(description="Corpus Clusterizer")
     parser.add_argument("--input", type=str, default='preprocessed_data.csv',
                         help="path to the preprocessed csv file")
     parser.add_argument('--verbose', help='print out the logs (default: False)', action='store_true')
