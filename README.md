@@ -34,7 +34,7 @@ the preprocessed file is then stored into the default (```data/preprocessed_data
 
 **```clustering.py```** script takes as an input the path to the preprocessed csv file which will be used for training the KMeans algorithm (```--input param```). All the data is preprocessed using three methods: tf-idf, token presence and token frequency. Two ways of clustering are applied: clustering into 2 classes and claustering into 6 classes. The results of the algorithm with the default parameters are then stored into the ```data/Clustering results.csv``` (a comparison table) and ```data/Clustering visualization.png``` (a comparison plot) files. 
 
-**```classification.py```** script  takes as an input the path to the preprocessed csv file which will be used for training the Percetron algorithm. All the data is preprocessed using Tf-Idf Vectorizer. The results of the algorithm with th default parameters are stored into the data folder. The files are:
+**```classification.py```** script  takes as an input the path to the preprocessed csv file which will be used for training the Percetron algorithm. All the data is preprocessed using Tf-Idf Vectorizer. The results of the algorithm with the default parameters are stored into the data folder. The files are:
 
 - ```Confusion matrix 6 classes.png``` with the confusion matrix for the 6 class classification
 
@@ -54,9 +54,9 @@ All the scripts have the ```--verbose``` param which activates printing out the 
 
 These are the results obtained on the data stored in the ```data``` directory:
 
-**Clusterization**:
+**Clustering**:
 
-![Clustering visualization](data/Clustering visualization.png)
+![Clustering visualization](https://github.com/e-lubrini/clustering-and-classifying-people/blob/master/data/Clustering%20visualization.png)
 
 
 
@@ -72,7 +72,7 @@ These are the results obtained on the data stored in the ```data``` directory:
 
 **2 class classification:**
 
-![Confusion matrix 2 classes](data/Confusion matrix 2 classes.png)
+![Confusion matrix 2 classes](https://github.com/e-lubrini/clustering-and-classifying-people/blob/master/data/Confusion%20matrix%202%20classes.png)
 
 |                  | **precision** | **recall** | **f1-score** | **support** |
 | ---------------- | ------------- | ---------- | ------------ | ----------- |
@@ -84,7 +84,7 @@ These are the results obtained on the data stored in the ```data``` directory:
 
 **6 class classification:**
 
-![Confusion matrix 6 classes](data/Confusion matrix 6 classes.png)
+![Confusion matrix 6 classes](https://github.com/e-lubrini/clustering-and-classifying-people/blob/master/data/Confusion%20matrix%206%20classes.png)
 
 |                   | **precision** | **recall** | **f1-score** | **support** |
 | ----------------- | ------------- | ---------- | ------------ | ----------- |
@@ -100,7 +100,7 @@ These are the results obtained on the data stored in the ```data``` directory:
 
 **Comparison**:
 
-![Accuracy visualization](data/Accuracy visualization.png)
+![Accuracy visualization](https://github.com/e-lubrini/clustering-and-classifying-people/blob/master/data/Accuracy%20visualization.png)
 
 
 
