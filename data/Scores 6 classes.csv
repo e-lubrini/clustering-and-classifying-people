@@ -1,10 +1,10 @@
 ,precision,recall,f1-score,support
-architect,0.44,0.19,0.27,21.0
-mathematician,0.56,1.0,0.71,5.0
-painter,0.22,0.5,0.31,4.0
-politician,0.0,0.0,0.0,8.0
-singer,0.67,0.4,0.5,15.0
-writer,0.0,0.0,0.0,1.0
+architect,0.33,0.23,0.27,13.0
+mathematician,0.22,0.25,0.24,8.0
+painter,0.22,1.0,0.36,2.0
+politician,0.11,0.14,0.12,7.0
+singer,0.56,0.33,0.42,15.0
+writer,0.44,0.44,0.44,9.0
 accuracy,0.31,0.31,0.31,0.31
-macro avg,0.31,0.35,0.3,54.0
-weighted avg,0.43,0.31,0.33,54.0
+macro avg,0.31,0.4,0.31,54.0
+weighted avg,0.36,0.31,0.32,54.0
