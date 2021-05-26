@@ -32,7 +32,7 @@ In order to obtain all the results, it is necessary to run 4 following commands:
 
 the preprocessed file is then stored into the default (```data/preprocessed_data.csv```) file or another one defined in the ```--output``` param. 
 
-**```clustering.py```** script takes as an input the path to the preprocessed csv file which will be used for training the KMeans algorithm (```--input param```). All the data is preprocessed using three methods: tf-idf, token presence and token frequency. Two ways of clustering are applied: clustering into 2 classes and claustering into 6 classes. The results of the algorithm with the default parameters are then stored into the ```data/Clustering results.csv``` (a comparison table) and ```data/Clustering visualization.png``` (a comparison plot) files. 
+**```clustering.py```** script takes as an input the path to the preprocessed csv file which will be used for training the KMeans algorithm (```--input param```). All the data is preprocessed using three methods: tf-idf, token presence and token frequency. Two ways of are applied: clustering into 2 classes and claustering into 6 classes. The results of the algorithm with the default parameters are then stored into the ```data/clustering_results.csv``` (a comparison table) and ```data/clustering_visualization.png``` (a comparison plot) files. 
 
 **```classification.py```** script  takes as an input the path to the preprocessed csv file which will be used for training the Percetron algorithm. All the data is preprocessed using Tf-Idf Vectorizer. The results of the algorithm with the default parameters are stored into the data folder. The files are:
 
